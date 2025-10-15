@@ -3,9 +3,7 @@ version: '3.8'
 services:
   # Spring Boot应用服务
   deepfake-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE}
     container_name: deepfake-app
     ports:
       - "8888:8888"
@@ -56,7 +54,7 @@ services:
 
   # Redis缓存服务
   redis-db:
-    image: redis:7-alpine
+    image: redis:latest
     container_name: deepfake-redis
     ports:
       - "6379:6379"

@@ -1,22 +1,4 @@
-# 多阶段构建
-FROM openjdk:11-jdk-slim as builder
 
-# 设置工作目录
-WORKDIR /app
-
-# 复制Maven配置文件
-COPY pom.xml .
-
-# 下载依赖（利用Docker缓存）
-RUN mvn dependency:go-offline -B
-
-# 复制源代码
-COPY src ./src
-
-# 构建应用
-RUN mvn clean package -Pprod -DskipTests
-
-# 运行时镜像
 FROM openjdk:11-jre-slim
 
 # 设置工作目录
@@ -24,11 +6,10 @@ WORKDIR /app
 
 # 安装必要的工具
 RUN apt-get update && apt-get install -y \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 从构建阶段复制jar文件
-COPY --from=builder /app/target/*.jar app.jar
+# 复制jar文件
+COPY target/deepfake-0.0.1-SNAPSHOT.jar app.jar
 
 # 创建必要的目录
 RUN mkdir -p /app/logs /app/uploads
@@ -48,9 +29,12 @@ EXPOSE 8888
 # 设置JVM参数
 ENV JAVA_OPTS="-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom"
 
+# 开启prod参数
+ENV PROD_OPT = "--spring.profiles.active=prod"
+
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8888/actuator/health || exit 1
 
 # 启动应用
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS $PROD_OPT -jar app.jar"]
