@@ -7,14 +7,11 @@ import com.basis.annotations.LoginTypeAnno;
 import com.basis.common.ResponseCode;
 import com.basis.common.Result;
 import com.basis.exception.BusinessException;
-import com.basis.mapper.RoleMapper;
 import com.basis.mapper.UserMapper;
 import com.basis.model.entity.User;
 import com.basis.model.vo.LoginVo;
-import com.basis.service.IUserRoleService;
 import com.basis.utils.RedisUtils;
 import com.basis.utils.ThrowUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -38,9 +35,6 @@ public class EmailLoginStrategy implements LoginStrategy {
 
     @Resource
     private UserMapper userMapper;
-
-    @Autowired
-    private IUserRoleService userRoleService;
 
     @Override
     public Result<String> login(LoginVo vo) {
@@ -68,8 +62,6 @@ public class EmailLoginStrategy implements LoginStrategy {
             user.setNickName(DEFAULT_NICK_NAME);
             user.setSex(2); // 默认未知
             userMapper.insert(user);
-            // 分配初始角色
-            userRoleService.assignmentRole(user.getId());
         }
         // 执行登录
         StpUtil.login(user.getId());

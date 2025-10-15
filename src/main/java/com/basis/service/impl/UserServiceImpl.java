@@ -11,7 +11,6 @@ import com.basis.model.entity.User;
 import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
-import com.basis.service.IUserRoleService;
 import com.basis.service.IUserService;
 import com.basis.strategy.login.LoginStrategy;
 import com.basis.strategy.login.LoginStrategyFactory;
@@ -19,6 +18,8 @@ import com.basis.strategy.sendStrategy.SendCaptchaStrategy;
 import com.basis.strategy.sendStrategy.SendCaptchaStrategyFactory;
 import com.basis.utils.PasswordUtils;
 import com.basis.utils.ThrowUtil;
+import com.basis.utils.UsernameUtil;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,8 +47,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     private SendCaptchaStrategyFactory sendCaptchaStrategyFactory;
 
-    @Autowired
-    private IUserRoleService userRoleService;
 
     /**
      * 退出登录
@@ -80,33 +79,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public Result<?> register(RegisterVo vo) {
         // 校验参数
-        ThrowUtil.throwIf(StrUtil.isEmpty(vo.getUsername()) || StrUtil.isEmpty(vo.getPassword()),
+        ThrowUtil.throwIf(StrUtil.isEmpty(vo.getEmail()) || StrUtil.isEmpty(vo.getPassword()),
                 new BusinessException(USERNAME_OR_PASS_EMPTY));
-        // TODO 验证码校验（按需添加）
-        // String code = (String) redisUtils.getValue(StrUtil.join(NORMAL_CODE_PREFIX, vo.getUsername()));
-        // ThrowUtil.throwIf(Objects.isNull(code) || StrUtil.isEmpty(code) || !vo.getCode().equalsIgnoreCase(code),
-        //         new BusinessException(CODE_NOT_CORRECT));
-        // 根据用户名查询用户是否存在
-        User one = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, vo.getUsername()).last("LIMIT 1"));
-        // 校验是否存在
+        // 根据email查询用户是否存在
+        User one = getOne(new LambdaQueryWrapper<User>().eq(User::getEmail, vo.getEmail()).last("LIMIT 1"));        // 校验是否存在
         ThrowUtil.throwIf(Objects.nonNull(one), new BusinessException(USER_ALREADY_EXISTED));
-        // 获取用户加密盐
         String salt = PasswordUtils.getSalt();
-        // 加密密码
         String encode = PasswordUtils.encode(vo.getPassword(), salt);
-        // 填充角色信息
         User user = new User();
+        // 生成username
+        String username = UsernameUtil.generateUsernameFromEmail(vo.getEmail());
         user.setPassword(encode);
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
         user.setSalt(salt);
-        user.setUserName(vo.getUsername());
+        user.setEmail(vo.getEmail());
+        user.setUserName(username);
         user.setIsDeleted(false);
         user.setNickName(DEFAULT_NICK_NAME);
         user.setSex(2); // 默认未知
         save(user);
-        // 分配角色
-        userRoleService.assignmentRole(user.getId());
         return Result.success();
     }
 

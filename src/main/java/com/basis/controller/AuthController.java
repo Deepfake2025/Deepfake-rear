@@ -48,9 +48,9 @@ public class AuthController {
         return userService.register(vo);
     }
 
-    @ApiOperation(value = "发送验证码")
-    @PostMapping(value = "/send", name = "发送验证码", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Result<?> sendCaptcha(@RequestBody(required = false) SendVo vo) {
-        return userService.sendCaptcha(vo);
-    }
+    // @ApiOperation(value = "发送验证码")
+    // @PostMapping(value = "/send", name = "发送验证码", produces = MediaType.APPLICATION_JSON_VALUE)
+    // public Result<?> sendCaptcha(@RequestBody(required = false) SendVo vo) {
+    //     return userService.sendCaptcha(vo);
+    // }
 }

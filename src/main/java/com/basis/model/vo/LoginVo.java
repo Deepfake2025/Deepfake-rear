@@ -30,6 +30,6 @@ public class LoginVo {
     @ApiModelProperty(value = "验证码")
     private String code;
 
-    @ApiModelProperty(value = "登录方式 默认是普通登录")
-    private String loginType = LoginTypeEnums.NORMAL.name();
+    @ApiModelProperty(value = "登录方式 默认是邮箱密码登录")
+    private String loginType = LoginTypeEnums.EMLPSW.name();
 }

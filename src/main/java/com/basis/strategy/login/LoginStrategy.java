@@ -14,6 +14,6 @@ public interface LoginStrategy {
      * 登录操作
      * @param vo 请求体
      * @return Token 值
-     */
+     */ 
     Result<String> login(LoginVo vo);
 }

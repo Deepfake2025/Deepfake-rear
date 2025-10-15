@@ -13,6 +13,9 @@ public enum LoginTypeEnums {
     // 普通方式登录 用户名 + 密码
     NORMAL,
 
+    // 邮箱 + 密码
+    EMLPSW,
+
     // 邮箱登录
     EMAIL,
 

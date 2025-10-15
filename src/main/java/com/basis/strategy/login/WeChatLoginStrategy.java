@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.basis.annotations.LoginTypeAnno;
 import com.basis.common.Result;
 import com.basis.mapper.UserMapper;
-import com.basis.mapper.UserRoleMapper;
 import com.basis.model.entity.User;
 import com.basis.model.entity.UserRole;
 import com.basis.model.vo.LoginVo;
@@ -34,8 +33,6 @@ public class WeChatLoginStrategy implements LoginStrategy {
     @Resource
     private WeChatUtils weChatUtils;
 
-    @Resource
-    private UserRoleMapper userRoleMapper;
 
     @Value("${system.default.roleId}")
     private Long defaultRoleId;
@@ -58,12 +55,7 @@ public class WeChatLoginStrategy implements LoginStrategy {
             one.setNickName(DEFAULT_NICK_NAME);
             // 保存用户信息
             userMapper.insert(one);
-            // 设置默认角色
-            UserRole userRole = new UserRole();
-            userRole.setId(one.getId());
-            // 默认新用户只有普通用户角色
-            userRole.setRId(defaultRoleId);
-            userRoleMapper.insert(userRole);
+        
         }
         // 执行登录
         StpUtil.login(one.getId());

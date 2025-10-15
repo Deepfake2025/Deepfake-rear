@@ -31,6 +31,8 @@ public enum ResponseCode {
 
     USERNAME_OR_PASS_EMPTY(40102, "用户名或密码不能为空"),
 
+    EMAIL_OR_PASS_EMPTY(40105, "邮箱或密码不能为空"),
+
     USER_NOT_EXIST(40104, "用户不存在"),
 
     PASSWORD_ERROR(401005, "用户密码错误, 请重新输入!"),

@@ -5,8 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -19,8 +18,7 @@ import java.time.LocalDateTime;
  * @author IT 派同学
  * @since 2024-12-07
  */
-@Getter
-@Setter
+@Data
 @TableName("xx_user")
 @ApiModel(value = "User对象", description = "")
 public class User implements Serializable {
@@ -42,9 +40,6 @@ public class User implements Serializable {
 
     @ApiModelProperty("微信 OpenID")
     private String openId;
-
-    @ApiModelProperty("备注")
-    private String remark;
 
     @ApiModelProperty("性别")
     private Integer sex;

@@ -7,7 +7,7 @@ package com.basis.model.constant;
  */
 public interface BasicConstant {
 
-    public static final String DEFAULT_NICK_NAME = "新用户";
+    public static final String DEFAULT_NICK_NAME = "new_user";
 
     public static final String OPEN_ID = "OPEN_ID";
 

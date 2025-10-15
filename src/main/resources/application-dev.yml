@@ -5,9 +5,9 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/init?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    url: jdbc:mysql://localhost:3306/dfdb?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
     username: root
-    password: root
+    password: 1237789
     type: com.alibaba.druid.pool.DruidDataSource
 
 # 微信
@@ -34,3 +34,13 @@ aliyun:
 
 file:
   path: C://upload/
+
+# SSL配置（可选，用于HTTPS支持）
+# 如需启用HTTPS，请取消注释以下配置并准备相应的SSL证书
+# server:
+#   ssl:
+#     enabled: true
+#     key-store: classpath:keystore.p12
+#     key-store-password: password
+#     key-store-type: PKCS12
+#     key-alias: tomcat
