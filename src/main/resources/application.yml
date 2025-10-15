@@ -19,7 +19,7 @@ spring:
     # redis访问密码（默认为空）
     password:
     # redis连接超时时间（单位毫秒）
-    timeout: 0
+    timeout: 1000
     # redis连接池配置
     pool:
       # 最大可用连接数（默认为8，负数表示无限）
