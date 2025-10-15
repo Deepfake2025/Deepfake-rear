@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Spring Boot应用服务
+  deepfake-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deepfake-app
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/dfdb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root123456
+      - SPRING_REDIS_HOST=redis-db
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=
+      - SPRING_REDIS_DATABASE=0
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis-db:
+        condition: service_healthy
+    networks:
+      - deepfake-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+
+  # MySQL数据库服务
+  mysql-db:
+    image: mysql:8.0
+    container_name: deepfake-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: dfdb
+      MYSQL_USER: deepfake
+      MYSQL_PASSWORD: deepfake123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/database/dfdb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - deepfake-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Redis缓存服务
+  redis-db:
+    image: redis:7-alpine
+    container_name: deepfake-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - deepfake-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    command: redis-server --appendonly yes
+
+  # Nginx反向代理（可选）
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: deepfake-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./nginx/conf.d:/etc/nginx/conf.d
+  #     - ./nginx/ssl:/etc/nginx/ssl
+  #   depends_on:
+  #     - deepfake-app
+  #   networks:
+  #     - deepfake-network
+  #   restart: unless-stopped
+
+# 网络配置
+networks:
+  deepfake-network:
+    driver: bridge
+
+# 数据卷配置
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local

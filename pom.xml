@@ -169,7 +169,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.basis.DeepfakeApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>

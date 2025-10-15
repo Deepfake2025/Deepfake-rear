@@ -18,3 +18,8 @@ buildNumber.properties
 
 .idea/**
 target/**
+
+sql/
+uploads/
+logs/
+nginx/
