@@ -91,3 +91,11 @@ sa-token:
 system:
   default:
     roleId: 1
+
+# nginx proxy server
+proxy:
+  schema: http
+  host: 8.138.83.109
+  port: 10001
+
+

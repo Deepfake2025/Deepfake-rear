@@ -1,11 +1,19 @@
 package com.basis.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import io.swagger.annotations.ApiOperation;
+
 import com.basis.common.Result;
+import com.basis.model.vo.LoginVo;
+import com.basis.model.vo.ProfileVo;
+import com.basis.model.vo.RegisterVo;
 import com.basis.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,6 +40,18 @@ public class UserController {
         log.info("permission ----> {}", StpUtil.hasPermission("per:add"));
         log.info("permissions ----> {}", StpUtil.getPermissionList(1));
         return Result.success();
+    }
+
+    @ApiOperation(value = "获取用户信息")
+    @GetMapping(value = "/get-profile", name = "获取用户信息", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Result<?> getProfile() {
+        return userService.getProfile();
+    }
+
+    @ApiOperation(value = "更新用户信息")
+    @PostMapping(value = "/update-profile", name = "更新用户信息", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Result<?> updateProfile(@RequestBody(required = false) ProfileVo vo) {
+        return userService.updateProfile(vo);
     }
 
 }

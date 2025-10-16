@@ -9,6 +9,7 @@ import com.basis.exception.BusinessException;
 import com.basis.mapper.UserMapper;
 import com.basis.model.entity.User;
 import com.basis.model.vo.LoginVo;
+import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
 import com.basis.service.IUserService;
@@ -21,13 +22,16 @@ import com.basis.utils.ThrowUtil;
 import com.basis.utils.UsernameUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import static com.basis.common.ResponseCode.NOTHING_TO_UPDATE;
 import static com.basis.common.ResponseCode.USERNAME_OR_PASS_EMPTY;
 import static com.basis.common.ResponseCode.USER_ALREADY_EXISTED;
+import static com.basis.common.ResponseCode.USER_NOT_EXIST;
 import static com.basis.model.constant.BasicConstant.DEFAULT_NICK_NAME;
 
 /**
@@ -46,6 +50,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Autowired
     private SendCaptchaStrategyFactory sendCaptchaStrategyFactory;
+
+    @Value("${proxy.schema}")
+    private String schema;
+    @Value("${proxy.host}")
+    private String host;
+    @Value("${proxy.port}")
+    private String port;
+
+
 
 
     /**
@@ -97,7 +110,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUserName(username);
         user.setIsDeleted(false);
         user.setNickName(DEFAULT_NICK_NAME);
-        user.setSex(2); // 默认未知
         save(user);
         return Result.success();
     }
@@ -112,5 +124,67 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result<?> sendCaptcha(SendVo vo) {
         SendCaptchaStrategy strategy = sendCaptchaStrategyFactory.getStrategy(vo.getSendType());
         return strategy.send(vo);
+    }
+
+    @Override
+    public Result<?> getProfile() {
+        Object username = StpUtil.getSession().get("username");
+
+        // 根据username在user数据表中查询
+        User one = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(one), USER_NOT_EXIST);
+    
+        // 构造Profile对象
+        ProfileVo profile = new ProfileVo();
+        profile.setEmail(one.getEmail());
+        profile.setNickname(one.getNickName());
+        profile.setPhone(one.getPhone() != null ? one.getPhone() : "");
+        // 构造avatarUrl
+        String avatarUrl = String.format("%s://%s:%s",schema, host, port) + one.getAvatar();
+        profile.setAvatarUrl(avatarUrl);
+
+
+        return Result.success(profile);
+    }
+
+    /**
+     * 更新个人信息
+     * 仅支持更新nickname, phone
+     *
+     * @param vo
+     * @return 操作结果
+     */
+    @Override
+    public Result<?> updateProfile(ProfileVo vo) {
+        // 获取当前登录用户
+        Object username = StpUtil.getSession().get("username");
+
+        // 根据username查询用户
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        // 更新用户信息
+        boolean needUpdate = false;
+
+        if (StrUtil.isNotEmpty(vo.getNickname()) && !Objects.equals(vo.getNickname(), user.getNickName())) {
+            user.setNickName(vo.getNickname());
+            needUpdate = true;
+        }
+
+        if (StrUtil.isNotEmpty(vo.getPhone()) && !Objects.equals(vo.getPhone(), user.getPhone())) {
+            user.setPhone(vo.getPhone());
+            needUpdate = true;
+        }
+
+        // 如果有更新，执行保存
+        if (needUpdate) {
+            user.setUpdateTime(LocalDateTime.now());
+            updateById(user);
+            return Result.success();
+        } else {
+            return Result.fail(NOTHING_TO_UPDATE);
+        }
+
+        
     }
 }

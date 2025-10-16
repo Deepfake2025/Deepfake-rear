@@ -60,7 +60,6 @@ public class EmailLoginStrategy implements LoginStrategy {
             user.setIsDeleted(false);
             user.setPhone(vo.getPhone());
             user.setNickName(DEFAULT_NICK_NAME);
-            user.setSex(2); // 默认未知
             userMapper.insert(user);
         }
         // 执行登录

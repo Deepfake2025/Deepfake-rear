@@ -62,6 +62,11 @@ public enum ResponseCode {
     DOWN_LOAD_FILE_ERROR(401016, "下载文件失败"),
 
     DELETED_FILE_ERROR(401017, "文件删除失败"),
+
+    FILE_EXISTED(401018, "文件已存在"),
+
+    NOTHING_TO_UPDATE(401019, "未进行任何更新"),
+    
     ;
 
     @ApiModelProperty(value = "状态码")
