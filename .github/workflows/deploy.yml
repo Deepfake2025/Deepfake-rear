@@ -172,7 +172,7 @@ jobs:
               echo "Application is healthy!"
               break
             fi
-            echo "Waiting for application to be healthy... ($i/10)"
+            echo "Waiting for application to be healthy... ($i/3)"
             sleep 10
           done
 
