@@ -41,9 +41,6 @@ public class User implements Serializable {
     @ApiModelProperty("微信 OpenID")
     private String openId;
 
-    @ApiModelProperty("性别")
-    private Integer sex;
-
     @ApiModelProperty("密码")
     private String password;
 

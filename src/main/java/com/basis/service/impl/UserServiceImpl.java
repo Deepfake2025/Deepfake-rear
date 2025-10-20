@@ -9,6 +9,7 @@ import com.basis.exception.BusinessException;
 import com.basis.mapper.UserMapper;
 import com.basis.model.entity.User;
 import com.basis.model.vo.LoginVo;
+import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
 import com.basis.service.IUserService;
@@ -28,6 +29,7 @@ import java.util.Objects;
 
 import static com.basis.common.ResponseCode.USERNAME_OR_PASS_EMPTY;
 import static com.basis.common.ResponseCode.USER_ALREADY_EXISTED;
+import static com.basis.common.ResponseCode.USER_NOT_EXIST;
 import static com.basis.model.constant.BasicConstant.DEFAULT_NICK_NAME;
 
 /**
@@ -97,7 +99,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUserName(username);
         user.setIsDeleted(false);
         user.setNickName(DEFAULT_NICK_NAME);
-        user.setSex(2); // 默认未知
         save(user);
         return Result.success();
     }
@@ -112,5 +113,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result<?> sendCaptcha(SendVo vo) {
         SendCaptchaStrategy strategy = sendCaptchaStrategyFactory.getStrategy(vo.getSendType());
         return strategy.send(vo);
+    }
+
+    @Override
+    public Result<?> getProfile() {
+        Object username = StpUtil.getSession().get("username");
+
+        // 根据username在user数据表中查询
+        User one = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(one), USER_NOT_EXIST);
+    
+        // 构造Profile对象
+        ProfileVo profile = new ProfileVo();
+        profile.setEmail(one.getEmail());
+        profile.setNickname(one.getNickName());
+        profile.setPhone(one.getPhone() != null ? one.getPhone() : "");
+        // 暂时设置avatarUrl为空，后续可以根据业务需求添加头像字段或生成逻辑
+        profile.setAvatarUrl("");
+
+
+        return Result.success(profile);
     }
 }

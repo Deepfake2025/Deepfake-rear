@@ -32,19 +32,23 @@ public class EmailPasswordLoginStrategy implements LoginStrategy {
 
     @Override
     public Result<String> login(LoginVo vo) {
-        // 校验参数
         ThrowUtil.throwIf(StrUtil.isEmpty(vo.getEmail()) || StrUtil.isEmpty(vo.getPassword()), new BusinessException(EMAIL_OR_PASS_EMPTY));
         // 根据email查询用户是否存在
         User one = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, vo.getEmail()).last("LIMIT 1"));
-        // 校验是否存在
         ThrowUtil.throwIf(Objects.isNull(one), new BusinessException(USER_NOT_EXIST));
+
         // 校验密码
-        // 获取用户加密盐
         String salt = one.getSalt();
-        // 校验密码是否正确
         ThrowUtil.throwIf(!PasswordUtils.matches(salt, vo.getPassword(), one.getPassword()), new BusinessException(PASSWORD_ERROR));
+
         // 执行登录
         StpUtil.login(one.getId());
+
+        String username = one.getUserName();
+        ThrowUtil.throwIf(Objects.isNull(username), new BusinessException(USER_NOT_EXIST));
+        StpUtil.getSession().set("username", username);
+
+        
         // 返回 Token 值
         return Result.success(StpUtil.getTokenValue());
     }

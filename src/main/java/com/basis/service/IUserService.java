@@ -42,4 +42,11 @@ public interface IUserService extends IService<User> {
      * @return 操作结果
      */
     Result<?> sendCaptcha(SendVo vo);
+
+
+    /**
+     * 获取用户信息
+     * @return 操作结果
+     */
+    Result<?> getProfile();
 }
