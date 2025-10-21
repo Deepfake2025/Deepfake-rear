@@ -3,6 +3,9 @@ package com.basis.service;
 import com.basis.common.Result;
 import com.basis.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.basis.model.vo.AvatarMetaVo;
+import com.basis.model.vo.AvatarUrlVo;
+import com.basis.model.vo.CallbackBodyVo;
 import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
@@ -58,4 +61,24 @@ public interface IUserService extends IService<User> {
      * @return 操作结果
      */
     Result<?> updateProfile(ProfileVo vo);
+
+
+ /**
+     * 上传用户头像初始化
+     * @param vo 头像图片文件元数据
+     * @return sts-token
+     */
+    Result<?> uploadInit(AvatarMetaVo vo);
+
+    /**
+     * 上传用户头像回调
+     * @return 头像URL返回信息
+     */
+    Result<?> uploadCallback(CallbackBodyVo vo);
+
+    /**
+     * 返回用户头像url
+     * @return 头像URL返回信息
+     */
+    Result<?> fecthAvatar();
 }

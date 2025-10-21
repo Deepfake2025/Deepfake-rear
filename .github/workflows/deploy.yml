@@ -153,6 +153,12 @@ jobs:
 
           # 创建 .env 文件来传递环境变量
           echo "APP_IMAGE=$FULL_IMAGE_TAG" | sudo tee .env
+          echo "ALIYUN_ACCESS_KEY_ID=${{ secrets.ALIYUN_ACCESS_KEY_ID }}" | sudo tee -a .env
+          echo "ALIYUN_ACCESS_KEY_SECRET=${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}" | sudo tee -a .env
+          echo "ALIYUN_ROLE_ARN=${{ secrets.ALIYUN_ROLE_ARN }}" | sudo tee -a .env
+          echo "ALIYUN_OSS_ENDPOINT=${{ secrets.ALIYUN_OSS_ENDPOINT }}" | sudo tee -a .env
+          echo "HOST=${{ secrets.HOST }}" | sudo tee -a .env
+          echo "PORT=${{ secrets.PORT }}" | sudo tee -a .env
 
           # 启动所有服务
           sudo docker compose up -d

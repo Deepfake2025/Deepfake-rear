@@ -2,21 +2,29 @@ package com.basis.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.basis.common.Result;
 import com.basis.exception.BusinessException;
 import com.basis.mapper.UserMapper;
 import com.basis.model.entity.User;
+import com.basis.model.vo.AvatarMetaVo;
+import com.basis.model.vo.AvatarUrlVo;
+import com.basis.model.vo.CallbackBodyVo;
 import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
+import com.basis.service.ICloudStorageService;
 import com.basis.service.IUserService;
 import com.basis.strategy.login.LoginStrategy;
 import com.basis.strategy.login.LoginStrategyFactory;
 import com.basis.strategy.sendStrategy.SendCaptchaStrategy;
 import com.basis.strategy.sendStrategy.SendCaptchaStrategyFactory;
+import com.basis.strategy.validateStrategy.AvatarValidationStrategy;
+import com.basis.strategy.validateStrategy.AvatarValidationStrategyFactory;
 import com.basis.utils.PasswordUtils;
 import com.basis.utils.ThrowUtil;
 import com.basis.utils.UsernameUtil;
@@ -42,6 +50,7 @@ import static com.basis.model.constant.BasicConstant.DEFAULT_NICK_NAME;
  * @author IT 派同学
  * @since 2024-12-07
  */
+@Slf4j
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
 
@@ -51,6 +60,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     private SendCaptchaStrategyFactory sendCaptchaStrategyFactory;
 
+    @Autowired
+    private AvatarValidationStrategyFactory avatarValidationStrategyFactory;
+
+    @Autowired
+    private ICloudStorageService cloudStorageService;
+
     @Value("${proxy.schema}")
     private String schema;
     @Value("${proxy.host}")
@@ -58,6 +73,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Value("${proxy.port}")
     private String port;
 
+    // 阿里云OSS头像上传配置
+    @Value("${aliyun.oss.avatar.max-file-size}")
+    private Long avatarMaxFileSize;
+
+    @Value("${aliyun.oss.avatar.allowed-file-types}")
+    private String[] allowedFileTypes;
+
+    @Value("${aliyun.oss.avatar.avatar-path}")
+    private String avatarPath;
+
+    @Value("${aliyun.oss.avatar.bucket-name}")
+    private String bucketName;
+
+    @Value("${aliyun.oss.avatar.endpoint}")
+    private String endpoint;
 
 
 
@@ -128,12 +158,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result<?> getProfile() {
+        // TODO: 私用redis缓存加快查询速度
         Object username = StpUtil.getSession().get("username");
 
         // 根据username在user数据表中查询
         User one = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
         ThrowUtil.throwIf(Objects.isNull(one), USER_NOT_EXIST);
-    
+
         // 构造Profile对象
         ProfileVo profile = new ProfileVo();
         profile.setEmail(one.getEmail());
@@ -146,6 +177,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         return Result.success(profile);
     }
+
 
     /**
      * 更新个人信息
@@ -187,4 +219,70 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         
     }
+
+    /**
+     * 上传头像初始化
+     *
+     * @param vo 头像图片文件元数据
+     * @return sts-token
+     */
+    @Override
+    public Result<?> uploadInit(AvatarMetaVo vo) {
+        // 获取当前登录用户
+        String username = StpUtil.getSession().get("username").toString();
+
+        // 根据username查询用户
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        // 检查meta数据是否符合上传标准
+        AvatarValidationStrategy validationStrategy = avatarValidationStrategyFactory.getStrategy();
+        validationStrategy.validateAvatarMetadata(vo);
+
+        // 申请STS凭证
+        return cloudStorageService.getAvatarUploadCredentials(username, vo);
+    }
+
+    @Override
+    public Result<?> uploadCallback(CallbackBodyVo vo) {
+        // 验证回调信息与缓存一致性，构造ossUrl
+        AvatarUrlVo auv = (AvatarUrlVo) cloudStorageService.handleUploadCallback(vo).getData();
+        log.info(auv.toString());
+        ThrowUtil.throwIf(Objects.isNull(auv), USER_NOT_EXIST);
+
+        // 将ossUrl 更新到Mysql
+        String username = StpUtil.getSession().get("username").toString();
+
+        // 根据username查询用户
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        // 更新用户头像URL
+        user.setAvatar(auv.getAvatarUrl());
+        user.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(user);
+
+        if (success) {
+            // 返回完整的头像URL
+            auv.setAvatarUrl(String.format("%s://%s:%s%s", schema, host, port, auv.getAvatarUrl()));
+            return Result.success(auv);
+        } else {
+            return Result.fail("Write avatar oss-url into db failed");
+        }
+    }
+
+    @Override
+    public Result<?> fecthAvatar() {
+        // TODO: 使用redis缓存数据库信息，来加快查询速度
+        String username = StpUtil.getSession().get("username").toString();
+        // 直接从数据库拿到User
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        AvatarUrlVo auv = new AvatarUrlVo(String.format("%s://%s:%s%s", schema, host, port, user.getAvatar()), "success");
+        return Result.success(auv);
+    }
+
+    
+
 }

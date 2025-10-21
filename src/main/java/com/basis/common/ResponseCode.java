@@ -66,6 +66,8 @@ public enum ResponseCode {
     FILE_EXISTED(401018, "文件已存在"),
 
     NOTHING_TO_UPDATE(401019, "未进行任何更新"),
+
+    OBTAIN_STS_TOKEN_FAILED(401020, "获取STS凭证失败"),
     
     ;
 

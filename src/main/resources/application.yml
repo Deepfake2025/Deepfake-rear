@@ -2,12 +2,19 @@
 server:
   port: 8888
 spring:
+  config:
+    import: optional:file:.env[.properties]
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
   profiles:
     active: dev
+  # Jackson 配置
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    # 开启驼峰命名转换
+    default-property-inclusion: NON_NULL
 # Redis
   redis:
     # redis数据库索引(默认为0)，我们使用索引为3的数据库，避免和其他数据库冲突
@@ -95,7 +102,24 @@ system:
 # nginx proxy server
 proxy:
   schema: http
-  host: 8.138.83.109
-  port: 10001
+  host: ${HOST}
+  port: ${PORT}
 
 
+# 阿里云配置
+aliyun:
+  access-key-id: ${ALIYUN_ACCESS_KEY_ID}
+  access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET}
+  region: cn-guangzhou
+  role-arn: ${ALIYUN_ROLE_ARN}
+  sts-endpoint: sts.cn-guangzhou.aliyuncs.com
+  oss:
+    avatar:
+        bucket-name: user-images-bucket
+        endpoint: ${ALIYUN_OSS_ENDPOINT:https://oss-cn-guangzhou.aliyuncs.com}
+        callback-url: ${ALIYUN_CALLBACK_URL:http://${HOST}:${PORT}/user/avatar-upload/callback}
+        max-file-size: 10485760  # 10MB
+        allowed-file-types: jpg,jpeg,png
+        avatar-path: avatar/
+
+    
