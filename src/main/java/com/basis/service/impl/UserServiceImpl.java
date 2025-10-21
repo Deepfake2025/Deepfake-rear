@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import static com.basis.common.ResponseCode.NOTHING_TO_UPDATE;
 import static com.basis.common.ResponseCode.USERNAME_OR_PASS_EMPTY;
 import static com.basis.common.ResponseCode.USER_ALREADY_EXISTED;
 import static com.basis.common.ResponseCode.USER_NOT_EXIST;
@@ -144,5 +145,46 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
 
         return Result.success(profile);
+    }
+
+    /**
+     * 更新个人信息
+     * 仅支持更新nickname, phone
+     *
+     * @param vo
+     * @return 操作结果
+     */
+    @Override
+    public Result<?> updateProfile(ProfileVo vo) {
+        // 获取当前登录用户
+        Object username = StpUtil.getSession().get("username");
+
+        // 根据username查询用户
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        // 更新用户信息
+        boolean needUpdate = false;
+
+        if (StrUtil.isNotEmpty(vo.getNickname()) && !Objects.equals(vo.getNickname(), user.getNickName())) {
+            user.setNickName(vo.getNickname());
+            needUpdate = true;
+        }
+
+        if (StrUtil.isNotEmpty(vo.getPhone()) && !Objects.equals(vo.getPhone(), user.getPhone())) {
+            user.setPhone(vo.getPhone());
+            needUpdate = true;
+        }
+
+        // 如果有更新，执行保存
+        if (needUpdate) {
+            user.setUpdateTime(LocalDateTime.now());
+            updateById(user);
+            return Result.success();
+        } else {
+            return Result.fail(NOTHING_TO_UPDATE);
+        }
+
+        
     }
 }

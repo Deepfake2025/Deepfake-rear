@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiOperation;
 
 import com.basis.common.Result;
 import com.basis.model.vo.LoginVo;
+import com.basis.model.vo.ProfileVo;
+import com.basis.model.vo.RegisterVo;
 import com.basis.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +43,15 @@ public class UserController {
     }
 
     @ApiOperation(value = "获取用户信息")
-    @GetMapping(value = "/profile", name = "获取用户信息", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Result<?> profile() {
+    @GetMapping(value = "/get-profile", name = "获取用户信息", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Result<?> getProfile() {
         return userService.getProfile();
+    }
+
+    @ApiOperation(value = "更新用户信息")
+    @PostMapping(value = "/update-profile", name = "更新用户信息", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Result<?> updateProfile(@RequestBody(required = false) ProfileVo vo) {
+        return userService.updateProfile(vo);
     }
 
 }

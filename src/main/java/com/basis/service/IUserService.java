@@ -4,8 +4,11 @@ import com.basis.common.Result;
 import com.basis.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.basis.model.vo.LoginVo;
+import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
+
+import cn.hutool.setting.profile.Profile;
 
 /**
  * <p>
@@ -49,4 +52,10 @@ public interface IUserService extends IService<User> {
      * @return 操作结果
      */
     Result<?> getProfile();
+
+    /**
+     * 更新用户信息
+     * @return 操作结果
+     */
+    Result<?> updateProfile(ProfileVo vo);
 }

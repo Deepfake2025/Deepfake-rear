@@ -65,6 +65,7 @@ public enum ResponseCode {
 
     FILE_EXISTED(401018, "文件已存在"),
 
+    NOTHING_TO_UPDATE(401019, "未进行任何更新"),
     
     ;
 
