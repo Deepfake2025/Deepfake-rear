@@ -22,6 +22,7 @@ import com.basis.utils.ThrowUtil;
 import com.basis.utils.UsernameUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -48,6 +49,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Autowired
     private SendCaptchaStrategyFactory sendCaptchaStrategyFactory;
+
+    @Value("${proxy.schema}")
+    private String schema;
+    @Value("${proxy.host}")
+    private String host;
+    @Value("${proxy.port}")
+    private String port;
+
+
 
 
     /**
@@ -128,8 +138,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         profile.setEmail(one.getEmail());
         profile.setNickname(one.getNickName());
         profile.setPhone(one.getPhone() != null ? one.getPhone() : "");
-        // 暂时设置avatarUrl为空，后续可以根据业务需求添加头像字段或生成逻辑
-        profile.setAvatarUrl("");
+        // 构造avatarUrl
+        String avatarUrl = String.format("%s://%s:%s",schema, host, port) + one.getAvatar();
+        profile.setAvatarUrl(avatarUrl);
 
 
         return Result.success(profile);
