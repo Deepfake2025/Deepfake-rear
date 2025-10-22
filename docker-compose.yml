@@ -16,6 +16,15 @@ services:
       - SPRING_REDIS_PORT=6379
       - SPRING_REDIS_PASSWORD=
       - SPRING_REDIS_DATABASE=0
+      # 阿里云配置
+      - ALIYUN_ACCESS_KEY_ID=${ALIYUN_ACCESS_KEY_ID}
+      - ALIYUN_ACCESS_KEY_SECRET=${ALIYUN_ACCESS_KEY_SECRET}
+      - ALIYUN_REGION_ID=cn-guangzhou
+      - ALIYUN_ROLE_ARN=${ALIYUN_ROLE_ARN}
+      - ALIYUN_OSS_ENDPOINT=${ALIYUN_OSS_ENDPOINT}
+      # 应用配置
+      - HOST=${HOST}
+      - PORT=${PORT}
     depends_on:
       mysql-db:
         condition: service_healthy
