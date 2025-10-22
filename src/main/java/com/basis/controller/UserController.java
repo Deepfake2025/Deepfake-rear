@@ -7,6 +7,7 @@ import com.basis.common.Result;
 import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
+import com.basis.model.vo.AvatarMetaVo;
 import com.basis.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ public class UserController {
     @Autowired
     private IUserService userService;
 
+
     @GetMapping("/check")
     public Result<?> check() {
         log.info("login ---> {}", StpUtil.isLogin());
@@ -52,6 +54,14 @@ public class UserController {
     @PostMapping(value = "/update-profile", name = "更新用户信息", produces = MediaType.APPLICATION_JSON_VALUE)
     public Result<?> updateProfile(@RequestBody(required = false) ProfileVo vo) {
         return userService.updateProfile(vo);
+    }
+
+
+    @ApiOperation(value = "用户头像上传初始化")
+    @PostMapping(value = "/avatar-upload/init")
+    public Result<?> uploadInit(@RequestBody(required = true) AvatarMetaVo vo) {
+        log.info(vo.toString());
+        return userService.uploadInit(vo);
     }
 
 }

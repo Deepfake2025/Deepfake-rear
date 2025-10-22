@@ -8,15 +8,20 @@ import com.basis.common.Result;
 import com.basis.exception.BusinessException;
 import com.basis.mapper.UserMapper;
 import com.basis.model.entity.User;
+import com.basis.model.vo.AvatarMetaVo;
 import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
+import com.basis.model.vo.StsCredentialsVo;
+import com.basis.service.ICloudStorageService;
 import com.basis.service.IUserService;
 import com.basis.strategy.login.LoginStrategy;
 import com.basis.strategy.login.LoginStrategyFactory;
 import com.basis.strategy.sendStrategy.SendCaptchaStrategy;
 import com.basis.strategy.sendStrategy.SendCaptchaStrategyFactory;
+import com.basis.strategy.validateStrategy.AvatarValidationStrategy;
+import com.basis.strategy.validateStrategy.AvatarValidationStrategyFactory;
 import com.basis.utils.PasswordUtils;
 import com.basis.utils.ThrowUtil;
 import com.basis.utils.UsernameUtil;
@@ -27,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 import static com.basis.common.ResponseCode.NOTHING_TO_UPDATE;
 import static com.basis.common.ResponseCode.USERNAME_OR_PASS_EMPTY;
@@ -51,6 +57,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     private SendCaptchaStrategyFactory sendCaptchaStrategyFactory;
 
+    @Autowired
+    private AvatarValidationStrategyFactory avatarValidationStrategyFactory;
+
+    @Autowired
+    private ICloudStorageService cloudStorageService;
+
     @Value("${proxy.schema}")
     private String schema;
     @Value("${proxy.host}")
@@ -58,6 +70,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Value("${proxy.port}")
     private String port;
 
+    // 阿里云OSS头像上传配置
+    @Value("${aliyun.oss.avatar.max-file-size}")
+    private Long avatarMaxFileSize;
+
+    @Value("${aliyun.oss.avatar.allowed-file-types}")
+    private String[] allowedFileTypes;
+
+    @Value("${aliyun.oss.avatar.avatar-path}")
+    private String avatarPath;
+
+    @Value("${aliyun.oss.avatar.bucket-name}")
+    private String bucketName;
+
+    @Value("${aliyun.oss.avatar.endpoint}")
+    private String endpoint;
 
 
 
@@ -133,7 +160,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 根据username在user数据表中查询
         User one = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
         ThrowUtil.throwIf(Objects.isNull(one), USER_NOT_EXIST);
-    
+
         // 构造Profile对象
         ProfileVo profile = new ProfileVo();
         profile.setEmail(one.getEmail());
@@ -146,6 +173,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         return Result.success(profile);
     }
+
 
     /**
      * 更新个人信息
@@ -187,4 +215,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         
     }
+
+    /**
+     * 上传头像初始化
+     *
+     * @param vo 头像图片文件元数据
+     * @return sts-token
+     */
+    @Override
+    public Result<?> uploadInit(AvatarMetaVo vo) {
+        // 获取当前登录用户
+        String username = StpUtil.getSession().get("username").toString();
+
+        // 根据username查询用户
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        // 检查meta数据是否符合上传标准
+        AvatarValidationStrategy validationStrategy = avatarValidationStrategyFactory.getStrategy();
+        validationStrategy.validateAvatarMetadata(vo);
+
+        // 申请STS凭证
+        return cloudStorageService.getAvatarUploadCredentials(username, vo);
+    }
+
 }

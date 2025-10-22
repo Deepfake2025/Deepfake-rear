@@ -179,7 +179,7 @@ public class Demo {
 #### 上传头像
 - 描述：将头像图片上传到oss，更新mysql中的xx_user表
 - 接口：
-  - /user/avatar-upload/sts-token - 申请STS凭证（包含文件类型、大小限制）
+  - /user/avatar-upload/init - 检查文件元数据，返回STS凭证（包含文件类型、大小限制）
   - /user/avatar-upload/callback - OSS上传完成回调（文件信息验证、数据库更新）
   - /user/avatar-upload/confirm - 前端最终确认接口（事务一致性保证）
 
