@@ -75,4 +75,10 @@ public interface IUserService extends IService<User> {
      * @return 头像URL返回信息
      */
     Result<?> uploadCallback(CallbackBodyVo vo);
+
+    /**
+     * 返回用户头像url
+     * @return 头像URL返回信息
+     */
+    Result<?> fecthAvatar();
 }

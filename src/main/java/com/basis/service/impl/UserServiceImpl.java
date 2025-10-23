@@ -17,7 +17,6 @@ import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.SendVo;
-import com.basis.model.vo.StsCredentialsVo;
 import com.basis.service.ICloudStorageService;
 import com.basis.service.IUserService;
 import com.basis.strategy.login.LoginStrategy;
@@ -36,7 +35,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.UUID;
 
 import static com.basis.common.ResponseCode.NOTHING_TO_UPDATE;
 import static com.basis.common.ResponseCode.USERNAME_OR_PASS_EMPTY;
@@ -160,6 +158,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result<?> getProfile() {
+        // TODO: 私用redis缓存加快查询速度
         Object username = StpUtil.getSession().get("username");
 
         // 根据username在user数据表中查询
@@ -270,6 +269,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else {
             return Result.fail("Write avatar oss-url into db failed");
         }
+    }
+
+    @Override
+    public Result<?> fecthAvatar() {
+        // TODO: 使用redis缓存数据库信息，来加快查询速度
+        String username = StpUtil.getSession().get("username").toString();
+        // 直接从数据库拿到User
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        AvatarUrlVo auv = new AvatarUrlVo(String.format("%s://%s:%s%s", schema, host, port, user.getAvatar()), "success");
+        return Result.success(auv);
     }
 
     

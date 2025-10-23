@@ -70,4 +70,10 @@ public class UserController {
         return userService.uploadCallback(vo);
     }
 
+    @ApiOperation(value = "获取用头像url")
+    @GetMapping(value = "/fetch-avatar")
+    public Result<?> fetchAvatar() {
+        return userService.fecthAvatar();
+    }
+
 }
