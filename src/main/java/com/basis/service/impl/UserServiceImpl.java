@@ -2,6 +2,8 @@ package com.basis.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.basis.common.Result;
@@ -9,6 +11,8 @@ import com.basis.exception.BusinessException;
 import com.basis.mapper.UserMapper;
 import com.basis.model.entity.User;
 import com.basis.model.vo.AvatarMetaVo;
+import com.basis.model.vo.AvatarUrlVo;
+import com.basis.model.vo.CallbackBodyVo;
 import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
@@ -48,6 +52,7 @@ import static com.basis.model.constant.BasicConstant.DEFAULT_NICK_NAME;
  * @author IT 派同学
  * @since 2024-12-07
  */
+@Slf4j
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
 
@@ -238,5 +243,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 申请STS凭证
         return cloudStorageService.getAvatarUploadCredentials(username, vo);
     }
+
+    @Override
+    public Result<?> uploadCallback(CallbackBodyVo vo) {
+        // 验证回调信息与缓存一致性，构造ossUrl
+        AvatarUrlVo auv = (AvatarUrlVo) cloudStorageService.handleUploadCallback(vo).getData();
+        log.info(auv.toString());
+        ThrowUtil.throwIf(Objects.isNull(auv), USER_NOT_EXIST);
+
+        // 将ossUrl 更新到Mysql
+        String username = StpUtil.getSession().get("username").toString();
+
+        // 根据username查询用户
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
+
+        // 更新用户头像URL
+        user.setAvatar(auv.getAvatarUrl());
+        user.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(user);
+
+        if (success) {
+            // 返回完整的头像URL
+            auv.setAvatarUrl(String.format("%s://%s:%s%s", schema, host, port, auv.getAvatarUrl()));
+            return Result.success(auv);
+        } else {
+            return Result.fail("Write avatar oss-url into db failed");
+        }
+    }
+
+    
 
 }

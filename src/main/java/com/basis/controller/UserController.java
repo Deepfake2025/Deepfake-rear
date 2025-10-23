@@ -8,6 +8,7 @@ import com.basis.model.vo.LoginVo;
 import com.basis.model.vo.ProfileVo;
 import com.basis.model.vo.RegisterVo;
 import com.basis.model.vo.AvatarMetaVo;
+import com.basis.model.vo.CallbackBodyVo;
 import com.basis.service.IUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,8 +61,13 @@ public class UserController {
     @ApiOperation(value = "用户头像上传初始化")
     @PostMapping(value = "/avatar-upload/init")
     public Result<?> uploadInit(@RequestBody(required = true) AvatarMetaVo vo) {
-        log.info(vo.toString());
         return userService.uploadInit(vo);
+    }
+
+    @ApiOperation(value = "用户头像上传完成回调")
+    @PostMapping(value = "/avatar-upload/callback")
+    public Result<?> uploadCallback(@RequestBody(required = true) CallbackBodyVo vo) {
+        return userService.uploadCallback(vo);
     }
 
 }

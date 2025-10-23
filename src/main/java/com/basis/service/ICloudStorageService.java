@@ -2,7 +2,7 @@ package com.basis.service;
 
 import com.basis.common.Result;
 import com.basis.model.vo.AvatarMetaVo;
-import com.basis.model.vo.StsCredentialsVo;
+import com.basis.model.vo.CallbackBodyVo;
 
 /**
  * <p>
@@ -23,6 +23,13 @@ public interface ICloudStorageService {
      * @return STS临时凭证信息
      */
     Result<?> getAvatarUploadCredentials(String username, AvatarMetaVo vo);
+
+    /**
+     * 处理上传完成回调
+     *
+     * @return 返回资源路径
+     */
+    Result<?> handleUploadCallback(CallbackBodyVo vo);
 
 
     /**
