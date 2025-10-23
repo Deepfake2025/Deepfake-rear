@@ -81,22 +81,22 @@ services:
     command: redis-server --appendonly yes
 
   # Nginx反向代理
-  nginx:
-    image: nginx:alpine
-    container_name: deepfake-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - deepfake-app
-    networks:
-      - deepfake-network
-    restart: unless-stopped
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: deepfake-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./nginx/conf.d:/etc/nginx/conf.d
+  #     - ./nginx/ssl:/etc/nginx/ssl
+  #     - ./logs/nginx:/var/log/nginx
+  #   depends_on:
+  #     - deepfake-app
+  #   networks:
+  #     - deepfake-network
+  #   restart: unless-stopped
 
 # 网络配置
 networks:
