@@ -49,7 +49,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
       - ./src/main/resources/database/dfdb.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - deepfake-network
