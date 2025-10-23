@@ -169,7 +169,7 @@ public class CloudStorageService implements ICloudStorageService {
             "        \"oss:PutObject\"\n" +
             "      ],\n" +
             "      \"Resource\": [\n" +
-            "        \"acs:oss:*:*:" + bucketName + "/" + avatarPath + username + "/*\"\n" +
+            "        \"acs:oss:*:*:" + bucketName + "/" + avatarPath + "*\"\n" +
             "      ]\n" +
             "    }\n" +
             "  ]\n" +
