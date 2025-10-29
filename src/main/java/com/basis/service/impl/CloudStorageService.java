@@ -82,75 +82,85 @@ public class CloudStorageService implements ICloudStorageService {
         }
 
         // 获取STS临时凭证
+        
+        // 发起STS请求所在的地域。建议保留默认值，默认值为空字符串（""）。
+        String regionId = "";
+        // 临时访问凭证的有效时间，单位为秒。最小值为900，最大值以当前角色设定的最大会话时间为准
+        Long durationSeconds = 3600L;
+
+        // 添加endpoint。适用于Java SDK 3.12.0及以上版本。
         try {
-            // 发起STS请求所在的地域。建议保留默认值，默认值为空字符串（""）。
-            String regionId = "";
-            // 临时访问凭证的有效时间，单位为秒。最小值为900，最大值以当前角色设定的最大会话时间为准
-            Long durationSeconds = 3600L;
-
-            // 添加endpoint。适用于Java SDK 3.12.0及以上版本。
+            // DefaultProfile.addEndpoint(endpoint, regionId, "Sts", endpoint);
             DefaultProfile.addEndpoint(endpoint, regionId, "Sts", endpoint);
-            // 构造default profile。
-            IClientProfile profile = DefaultProfile.getProfile(regionId, aliyunAccessKeyId, aliyunAccessKeySecret);
-            // 构造client。
-            DefaultAcsClient client = new DefaultAcsClient(profile);
-            final AssumeRoleRequest request = new AssumeRoleRequest();
-
-            // 适用于Java SDK 3.12.0以下版本。
-            request.setMethod(MethodType.POST);
-            request.setRoleArn(roleArn);
-            request.setRoleSessionName(username + "-" + System.currentTimeMillis());
-            request.setPolicy(policy);
-            request.setDurationSeconds(durationSeconds);
-            final AssumeRoleResponse response = client.getAcsResponse(request);
-
-            // 获取STS凭证信息
-            String accessKeyId = response.getCredentials().getAccessKeyId();
-            String accessKeySecret = response.getCredentials().getAccessKeySecret();
-            String securityToken = response.getCredentials().getSecurityToken();
-
-            // 构建返回对象
-            StsCredentialsVo credentials = new StsCredentialsVo();
-            credentials.setAccessKeyId(accessKeyId);
-            credentials.setAccessKeySecret(accessKeySecret);
-            credentials.setSecurityToken(securityToken);
-            
-            // 设置过期时间（需要转换Date到LocalDateTime）
-            credentials.setExpiration(LocalDateTime.now().plusSeconds(durationSeconds));
-
-            credentials.setBucketName(bucketName);
-            credentials.setRegion("cn-guangzhou");
-            credentials.setEndpoint(endpoint);
-
-            // 生成对象路径
-            String fileExtension = getFileExtensionFromMimeType(vo.getMimeType());
-            String objectPath = String.format("/%savatar-%s%s.%s",
-                    avatarPath, username, UUID.randomUUID().toString().substring(0, 8), fileExtension);
-            credentials.setObjectPath(objectPath);
-
-            credentials.setMaxFileSize(maxFileSize);
-            credentials.setAllowedFileTypes(allowedFileTypes);
-
-            // 创建上传缓存对象
-            AvatarUploadCache uploadCache = AvatarUploadCache.builder()
-                    .username(username)
-                    .objectPath(objectPath)
-                    .expectedBucket(bucketName)
-                    .uploadTime(System.currentTimeMillis())
-                    .build();
-
-            // 使用STS accessKeyId作为缓存key，有效期2小时（比STS凭证多1小时缓冲）
-            redisUtils.setValueTimeout(accessKeyId, uploadCache, 2 * durationSeconds);
-
-            log.info("Avatar upload info cached with accessKeyId: {}, username: {}, objectPath: {}",
-                accessKeyId, username, objectPath);
-
-            return Result.success(credentials);
-
-        } catch (ClientException e) {
-            log.error(e.getMessage());
-            return Result.fail(ResponseCode.OBTAIN_STS_TOKEN_FAILED);
+        }  catch (ClientException e) {
+            log.error("Failed to obtain STS token: {}", e.getMessage());
+            throw new BusinessException(ResponseCode.OBTAIN_STS_TOKEN_FAILED);
         }
+        // 构造default profile。
+        IClientProfile profile = DefaultProfile.getProfile(regionId, aliyunAccessKeyId, aliyunAccessKeySecret);
+        // 构造client。
+        DefaultAcsClient client = new DefaultAcsClient(profile);
+        final AssumeRoleRequest request = new AssumeRoleRequest();
+
+        // 适用于Java SDK 3.12.0以下版本。
+        request.setMethod(MethodType.POST);
+        request.setRoleArn(roleArn);
+        request.setRoleSessionName(username + "-" + System.currentTimeMillis());
+        request.setPolicy(policy);
+        request.setDurationSeconds(durationSeconds);
+        // 将当前的 try-catch 替换为：
+        final AssumeRoleResponse response;
+        try {
+            response = client.getAcsResponse(request);
+        } catch (ClientException e) {
+            log.error("Failed to obtain STS token: {}", e.getMessage());
+            throw new BusinessException(ResponseCode.OBTAIN_STS_TOKEN_FAILED);
+        }
+        
+        // 获取STS凭证信息
+        String accessKeyId = response.getCredentials().getAccessKeyId();
+        String accessKeySecret = response.getCredentials().getAccessKeySecret();
+        String securityToken = response.getCredentials().getSecurityToken();
+
+        // 构建返回对象
+        StsCredentialsVo credentials = new StsCredentialsVo();
+        credentials.setAccessKeyId(accessKeyId);
+        credentials.setAccessKeySecret(accessKeySecret);
+        credentials.setSecurityToken(securityToken);
+        
+        // 设置过期时间（需要转换Date到LocalDateTime）
+        credentials.setExpiration(LocalDateTime.now().plusSeconds(durationSeconds));
+
+        credentials.setBucketName(bucketName);
+        credentials.setRegion("cn-guangzhou");
+        credentials.setEndpoint(endpoint);
+
+        // 生成对象路径
+        String fileExtension = getFileExtensionFromMimeType(vo.getMimeType());
+        String objectPath = String.format("/%savatar-%s%s.%s",
+                avatarPath, username, UUID.randomUUID().toString().substring(0, 8), fileExtension);
+        credentials.setObjectPath(objectPath);
+
+        credentials.setMaxFileSize(maxFileSize);
+        credentials.setAllowedFileTypes(allowedFileTypes);
+
+        // 创建上传缓存对象
+        AvatarUploadCache uploadCache = AvatarUploadCache.builder()
+                .username(username)
+                .objectPath(objectPath)
+                .expectedBucket(bucketName)
+                .uploadTime(System.currentTimeMillis())
+                .build();
+
+        // 使用STS accessKeyId作为缓存key，有效期2小时（比STS凭证多1小时缓冲）
+        redisUtils.setValueTimeout(accessKeyId, uploadCache, 2 * durationSeconds);
+
+        log.info("Avatar upload info cached with accessKeyId: {}, username: {}, objectPath: {}",
+            accessKeyId, username, objectPath);
+
+        return Result.success(credentials);
+
+       
     }
 
 
@@ -203,29 +213,17 @@ public class CloudStorageService implements ICloudStorageService {
         // 从缓存中获取上传信息
         Object cachedData = redisUtils.getValue(vo.getAccessKeyId());
         ThrowUtil.throwIf(Objects.isNull(cachedData), NOT_FOUND, "Upload cache not found");
+        ThrowUtil.throwIf(!(cachedData instanceof AvatarUploadCache), NOT_FOUND);
+        AvatarUploadCache data = (AvatarUploadCache) cachedData;
 
-        AvatarUploadCache data;
-        try {
-            if (cachedData instanceof AvatarUploadCache) {
-                data = (AvatarUploadCache) cachedData;
-            } else {
-                log.error("Cache data type mismatch. Expected AvatarUploadCache, got: {}",
-                         cachedData.getClass().getName());
-                throw new BusinessException(ResponseCode.NOT_FOUND, "Cache data type mismatch");
-            }
-        } catch (ClassCastException e) {
-            log.error("Failed to cast cache data to AvatarUploadCache", e);
-            throw new BusinessException(ResponseCode.NOT_FOUND, "Cache data deserialization failed");
-        }
 
         // 验证缓存与回调信息一致性
         ThrowUtil.throwIf(!data.getExpectedBucket().equals(vo.getBucketName()),
                          NOT_FOUND, "Bucket name mismatch");
-        ThrowUtil.throwIf(!StpUtil.getSession().get("username").toString().equals(data.getUsername()), AUTH_FORBID);
 
         // 构建完整的OSS URL
         String ossUrl = String.format("%s", data.getObjectPath());
-        AvatarUrlVo auv = new AvatarUrlVo(ossUrl, "success");
+        AvatarUrlVo auv = new AvatarUrlVo(ossUrl, "success", data.getUsername());
         if(Objects.isNull(ossUrl)) auv.setStatus("ossUrl");
 
 

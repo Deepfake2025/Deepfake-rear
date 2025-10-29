@@ -19,10 +19,13 @@ public class AvatarUrlVo {
     @ApiModelProperty(value = "上传状态")
     private String status;
 
+    @ApiModelProperty(value = "用户名")
+    private String username;
 
-    public AvatarUrlVo(String avatarUrl, String status) {
+    public AvatarUrlVo(String avatarUrl, String status, String username) {
         this.avatarUrl = avatarUrl;
         this.status = status;
+        this.username = username;
     }
 
 }

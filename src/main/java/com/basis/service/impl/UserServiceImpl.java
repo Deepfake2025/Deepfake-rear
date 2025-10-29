@@ -251,10 +251,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         ThrowUtil.throwIf(Objects.isNull(auv), USER_NOT_EXIST);
 
         // 将ossUrl 更新到Mysql
-        String username = StpUtil.getSession().get("username").toString();
+        // String username = StpUtil.getSession().get("username").toString();
 
         // 根据username查询用户
-        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
+        User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, auv.getUsername()).last("LIMIT 1"));
         ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
 
         // 更新用户头像URL
@@ -279,7 +279,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         User user = getOne(new LambdaQueryWrapper<User>().eq(User::getUserName, username).last("LIMIT 1"));
         ThrowUtil.throwIf(Objects.isNull(user), USER_NOT_EXIST);
 
-        AvatarUrlVo auv = new AvatarUrlVo(String.format("%s://%s:%s%s", schema, host, port, user.getAvatar()), "success");
+        AvatarUrlVo auv = new AvatarUrlVo(String.format("%s://%s:%s%s", schema, host, port, user.getAvatar()), "success", username);
         return Result.success(auv);
     }
 
