@@ -1,8 +1,6 @@
 package com.basis.service;
 
-import com.basis.common.Result;
-import com.basis.model.vo.AvatarMetaVo;
-import com.basis.model.vo.CallbackBodyVo;
+import com.basis.model.vo.StsCredentialsVo;
 
 /**
  * <p>
@@ -15,21 +13,12 @@ import com.basis.model.vo.CallbackBodyVo;
  */
 public interface ICloudStorageService {
 
-    /**
-     * 获取头像上传STS临时凭证
+    /** 
+     * 申请STS临时凭证
      *
-     * @param username 用户名
-     * @param vo 头像文件元数据
-     * @return STS临时凭证信息
+     * @return 返回临时凭证
      */
-    Result<?> getAvatarUploadCredentials(String username, AvatarMetaVo vo);
-
-    /**
-     * 处理上传完成回调
-     *
-     * @return 返回资源路径
-     */
-    Result<?> handleUploadCallback(CallbackBodyVo vo);
+    StsCredentialsVo getStsCredentialsVo(String policy, String roleSessionName, Long durationSeconds);
 
 
     /**
@@ -47,13 +36,5 @@ public interface ICloudStorageService {
      */
     // void deleteFile(String objectName);
 
-    /**
-     * 验证上传回调
-     *
-     * @param authorization 回调签名
-     * @param body 回调内容
-     * @param path 请求路径
-     * @return 验证结果
-     */
-    // boolean validateCallback(String authorization, String body, String path);
+
 }

@@ -113,13 +113,19 @@ aliyun:
   region: cn-guangzhou
   role-arn: ${ALIYUN_ROLE_ARN}
   sts-endpoint: sts.cn-guangzhou.aliyuncs.com
+  endpoint: ${ALIYUN_OSS_ENDPOINT:https://oss-cn-guangzhou.aliyuncs.com}
+
   oss:
     avatar:
         bucket-name: user-images-bucket
-        endpoint: ${ALIYUN_OSS_ENDPOINT:https://oss-cn-guangzhou.aliyuncs.com}
-        callback-url: ${ALIYUN_CALLBACK_URL:http://${HOST}:${PORT}/user/avatar-upload/callback}
         max-file-size: 10485760  # 10MB
         allowed-file-types: jpg,jpeg,png
         avatar-path: avatar/
+
+    file:
+        bucket-name: user-file-bucket
+        max-file-size: 1073741824  # 1GB
+        allowed-file-types: mp4,avi,mp3,wav
+        file-path: detection/
 
     

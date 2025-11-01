@@ -1,4 +1,4 @@
-package com.basis.strategy.validateStrategy;
+package com.basis.strategy.validateStrategy.avatar;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

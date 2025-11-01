@@ -1,4 +1,4 @@
-package com.basis.strategy.validateStrategy;
+package com.basis.strategy.validateStrategy.avatar;
 
 import com.basis.model.vo.AvatarMetaVo;
 

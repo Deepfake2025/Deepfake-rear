@@ -11,7 +11,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 public class DeepfakeApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DeepfakeApplication.class, args);
+    SpringApplication.run(DeepfakeApplication.class, args);
     }
 
 }

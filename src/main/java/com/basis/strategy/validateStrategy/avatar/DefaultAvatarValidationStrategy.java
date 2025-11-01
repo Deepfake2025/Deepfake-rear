@@ -1,6 +1,7 @@
-package com.basis.strategy.validateStrategy;
+package com.basis.strategy.validateStrategy.avatar;
 
 import com.basis.exception.BusinessException;
+import com.basis.model.enums.MimeTypeEnum;
 import com.basis.model.vo.AvatarMetaVo;
 import com.basis.utils.ThrowUtil;
 import cn.hutool.core.util.StrUtil;
@@ -50,8 +51,20 @@ public class DefaultAvatarValidationStrategy implements AvatarValidationStrategy
         ThrowUtil.throwIf(StrUtil.isEmpty(mimeType),
                 new BusinessException("文件类型不能为空"));
 
-        // 检查MIME类型是否在允许的文件类型列表中
-        String fileExtension = getFileExtensionFromMimeType(mimeType);
+        // 检查是否为图片类型
+        if (!mimeType.startsWith("image/")) {
+            throw new BusinessException("仅支持图片文件");
+        }
+
+        // 使用MimeTypeEnum获取文件扩展名，当MIME类型不支持时会抛出异常
+        String fileExtension;
+        try {
+            fileExtension = MimeTypeEnum.getExtensionByMimeType(mimeType);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("不支持的图片类型: " + mimeType);
+        }
+
+        // 检查具体的文件格式是否在允许列表中
         boolean isAllowedType = false;
         for (String allowedType : allowedFileTypes) {
             if (allowedType.equalsIgnoreCase(fileExtension)) {
@@ -76,20 +89,4 @@ public class DefaultAvatarValidationStrategy implements AvatarValidationStrategy
         }
     }
 
-    /**
-     * 从MIME类型获取文件扩展名（不带点）
-     */
-    private String getFileExtensionFromMimeType(String mimeType) {
-        switch (mimeType) {
-            case "image/jpeg":
-            case "image/jpg":
-                return "jpg";
-            case "image/png":
-                return "png";
-            case "image/gif":
-                return "gif";
-            default:
-                return "jpg";
-        }
     }
-}
